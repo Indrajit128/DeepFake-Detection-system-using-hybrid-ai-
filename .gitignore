@@ -1,0 +1,19 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environments
+.venv/
+venv/
+ENV/
+env/
+
+# Datasets
+data/
+dataset/
+
+# Saved models and checkpoints
+*.keras
+*.h5
+outputs/models/

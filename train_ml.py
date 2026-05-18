@@ -52,7 +52,7 @@ def main():
     build_comparison_table(all_metrics)
     plot_metric_bars(all_metrics)
 
-    # ROC — defer to evaluate.py which combines all models
+    # ROC -- defer to evaluate.py which combines all models
     return all_metrics, roc_data
 
 

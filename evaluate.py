@@ -23,11 +23,11 @@ import config
 
 
 def main():
-    # ── Data ───────────────────────────────────────────────────────────────
+    # -- Data ---------------------------------------------------------------
     X, y = load_dataset()
     _, _, X_test, _, _, y_test = split_dataset(X, y)
 
-    # ── ML features ────────────────────────────────────────────────────────
+    # -- ML features --------------------------------------------------------
     from skimage.feature import hog
 
     def extract_hog(images):
@@ -46,11 +46,11 @@ def main():
     all_metrics = {}
     roc_data    = {}
 
-    # ── ML models ──────────────────────────────────────────────────────────
+    # -- ML models ----------------------------------------------------------
     for name in ALL_ML_MODELS:
         pkl = os.path.join(config.MODELS_DIR, f"{name}.pkl")
         if not os.path.exists(pkl):
-            print(f"[SKIP] {name} — model not found ({pkl})")
+            print(f"[SKIP] {name} -- model not found ({pkl})")
             continue
         model  = load_ml_model(name)
         y_pred = model.predict(F_test)
@@ -61,11 +61,11 @@ def main():
         roc_data[name]     = (y_test, y_prob)
         plot_confusion_matrix(y_test, y_pred, name)
 
-    # ── CNN ────────────────────────────────────────────────────────────────
+    # -- CNN ----------------------------------------------------------------
     for model_tag, display_name in [("cnn_best", "CNN"), ("cbam_best", "CNN+CBAM")]:
         ckpt = os.path.join(config.MODELS_DIR, f"{model_tag}.keras")
         if not os.path.exists(ckpt):
-            print(f"[SKIP] {display_name} — model not found ({ckpt})")
+            print(f"[SKIP] {display_name} -- model not found ({ckpt})")
             continue
         model  = tf.keras.models.load_model(ckpt)
         y_prob = model.predict(X_test, batch_size=config.BATCH_SIZE).ravel()
@@ -76,7 +76,7 @@ def main():
         roc_data[display_name]    = (y_test, y_prob)
         plot_confusion_matrix(y_test, y_pred, display_name)
 
-    # ── Summary ────────────────────────────────────────────────────────────
+    # -- Summary ------------------------------------------------------------
     if not all_metrics:
         print("No trained models found. Run train_ml.py, train_cnn.py, train_cbam.py first.")
         return

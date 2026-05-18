@@ -50,7 +50,7 @@ def load_dataset(real_dir: str = config.REAL_DIR,
 
     X = np.stack(images, axis=0)   # (N, H, W, C)
     y = np.array(labels, dtype=np.int32)
-    print(f"Loaded {len(y)} images — real: {(y==0).sum()}, fake: {(y==1).sum()}")
+    print(f"Loaded {len(y)} images -- real: {(y==0).sum()}, fake: {(y==1).sum()}")
     return X, y
 
 
@@ -67,7 +67,7 @@ def split_dataset(X: np.ndarray, y: np.ndarray):
         random_state=config.SEED, stratify=y_tmp
     )
 
-    print(f"Split → train: {len(y_train)}, val: {len(y_val)}, test: {len(y_test)}")
+    print(f"Split -> train: {len(y_train)}, val: {len(y_val)}, test: {len(y_test)}")
     return X_train, X_val, X_test, y_train, y_val, y_test
 
 

@@ -2,61 +2,107 @@
 CNN + CBAM (Convolutional Block Attention Module) for deepfake detection.
 
 CBAM applies two sequential attention gates after each conv block:
-  1. Channel Attention  — "which feature maps matter?"
+  1. Channel Attention  -- "which feature maps matter?"
      Squeeze: both AvgPool and MaxPool over spatial dims
-     Excite:  shared 2-layer MLP → element-wise multiply on channels
+     Excite:  shared 2-layer MLP -> element-wise multiply on channels
 
-  2. Spatial Attention  — "where in the image matters?"
-     Pool channels with Avg and Max → concatenate → 7x7 Conv → sigmoid mask
+  2. Spatial Attention  -- "where in the image matters?"
+     Pool channels with Avg and Max -> concatenate -> 7x7 Conv -> sigmoid mask
 
-This forces the network to focus on forgery artefacts (blending boundaries,
-frequency inconsistencies) rather than unrelated scene content.
+Custom Keras Layer subclasses are used (not Lambda) for full Keras 3 compatibility.
 """
 
+import keras
+from keras import layers, ops
 import tensorflow as tf
-from tensorflow.keras import layers, models, regularizers
 import config
 
 
 # ---------------------------------------------------------------------------
-# CBAM building blocks
+# Serializable helper layers
 # ---------------------------------------------------------------------------
 
-def channel_attention(x: tf.Tensor, ratio: int = config.CBAM_REDUCTION_RATIO) -> tf.Tensor:
-    channels = x.shape[-1]
-    shared_dense_1 = layers.Dense(channels // ratio, activation="relu", use_bias=False)
-    shared_dense_2 = layers.Dense(channels, use_bias=False)
-
-    # Average-pool path
-    avg = layers.GlobalAveragePooling2D()(x)              # (B, C)
-    avg = shared_dense_1(avg)
-    avg = shared_dense_2(avg)
-
-    # Max-pool path
-    mx  = layers.GlobalMaxPooling2D()(x)
-    mx  = shared_dense_1(mx)
-    mx  = shared_dense_2(mx)
-
-    scale = layers.Activation("sigmoid")(avg + mx)        # (B, C)
-    scale = layers.Reshape((1, 1, channels))(scale)       # (B, 1, 1, C)
-    return layers.Multiply()([x, scale])
+class ChannelMeanPool(layers.Layer):
+    """Reduces the channel axis with mean — fully serializable."""
+    def call(self, x):
+        return ops.mean(x, axis=-1, keepdims=True)
 
 
-def spatial_attention(x: tf.Tensor, kernel_size: int = 7) -> tf.Tensor:
-    # Reduce along channel axis
-    avg = tf.reduce_mean(x, axis=-1, keepdims=True)       # (B, H, W, 1)
-    mx  = tf.reduce_max(x, axis=-1, keepdims=True)        # (B, H, W, 1)
-    concat = layers.Concatenate(axis=-1)([avg, mx])       # (B, H, W, 2)
-
-    scale = layers.Conv2D(1, kernel_size, padding="same",
-                          activation="sigmoid", use_bias=False)(concat)
-    return layers.Multiply()([x, scale])
+class ChannelMaxPool(layers.Layer):
+    """Reduces the channel axis with max — fully serializable."""
+    def call(self, x):
+        return ops.max(x, axis=-1, keepdims=True)
 
 
-def cbam_block(x: tf.Tensor) -> tf.Tensor:
-    x = channel_attention(x)
-    x = spatial_attention(x)
-    return x
+# ---------------------------------------------------------------------------
+# CBAM as proper Keras Layer subclasses (Keras 3 compatible)
+# ---------------------------------------------------------------------------
+
+class ChannelAttention(layers.Layer):
+    def __init__(self, ratio: int = config.CBAM_REDUCTION_RATIO, **kwargs):
+        super().__init__(**kwargs)
+        self.ratio = ratio
+
+    def build(self, input_shape):
+        channels = input_shape[-1]
+        self.dense1 = layers.Dense(channels // self.ratio, activation="relu", use_bias=False)
+        self.dense2 = layers.Dense(channels, use_bias=False)
+        super().build(input_shape)
+
+    def call(self, x):
+        # x: (B, H, W, C)
+        avg = ops.mean(x, axis=[1, 2])              # (B, C)
+        mx  = ops.max(x,  axis=[1, 2])              # (B, C)
+        avg = self.dense2(self.dense1(avg))
+        mx  = self.dense2(self.dense1(mx))
+        scale = ops.sigmoid(avg + mx)               # (B, C)
+        scale = ops.expand_dims(scale, axis=1)
+        scale = ops.expand_dims(scale, axis=1)      # (B, 1, 1, C)
+        return x * scale
+
+    def get_config(self):
+        return {**super().get_config(), "ratio": self.ratio}
+
+
+class SpatialAttention(layers.Layer):
+    def __init__(self, kernel_size: int = 7, **kwargs):
+        super().__init__(**kwargs)
+        self.kernel_size = kernel_size
+        self.mean_pool = ChannelMeanPool()
+        self.max_pool = ChannelMaxPool()
+
+    def build(self, input_shape):
+        self.conv = layers.Conv2D(1, self.kernel_size, padding="same",
+                                  activation="sigmoid", use_bias=False)
+        super().build(input_shape)
+
+    def call(self, x):
+        avg = self.mean_pool(x)   # (B, H, W, 1)
+        mx  = self.max_pool(x)    # (B, H, W, 1)
+        scale = self.conv(ops.concatenate([avg, mx], axis=-1))  # (B, H, W, 1)
+        return x * scale
+
+    def get_config(self):
+        return {**super().get_config(), "kernel_size": self.kernel_size}
+
+
+class CBAMBlock(layers.Layer):
+    def __init__(self, ratio: int = config.CBAM_REDUCTION_RATIO,
+                 kernel_size: int = 7, **kwargs):
+        super().__init__(**kwargs)
+        self.channel_att = ChannelAttention(ratio)
+        self.spatial_att = SpatialAttention(kernel_size)
+
+    def call(self, x):
+        x = self.channel_att(x)
+        x = self.spatial_att(x)
+        return x
+
+    def get_config(self):
+        cfg = super().get_config()
+        cfg.update({"ratio": self.channel_att.ratio,
+                    "kernel_size": self.spatial_att.kernel_size})
+        return cfg
 
 
 # ---------------------------------------------------------------------------
@@ -64,37 +110,37 @@ def cbam_block(x: tf.Tensor) -> tf.Tensor:
 # ---------------------------------------------------------------------------
 
 def build_cbam_cnn(input_shape=(config.IMG_SIZE, config.IMG_SIZE, config.CHANNELS),
-                   l2_reg: float = 1e-4) -> tf.keras.Model:
+                   l2_reg: float = 1e-4) -> keras.Model:
 
-    reg = regularizers.l2(l2_reg)
+    reg = keras.regularizers.l2(l2_reg)
     inp = layers.Input(shape=input_shape, name="input")
 
     # Block 1
     x = layers.Conv2D(32, 3, padding="same", kernel_regularizer=reg)(inp)
     x = layers.BatchNormalization()(x)
     x = layers.Activation("relu")(x)
-    x = cbam_block(x)
+    x = CBAMBlock(name="cbam_1")(x)
     x = layers.MaxPooling2D(2)(x)
 
     # Block 2
     x = layers.Conv2D(64, 3, padding="same", kernel_regularizer=reg)(x)
     x = layers.BatchNormalization()(x)
     x = layers.Activation("relu")(x)
-    x = cbam_block(x)
+    x = CBAMBlock(name="cbam_2")(x)
     x = layers.MaxPooling2D(2)(x)
 
     # Block 3
     x = layers.Conv2D(128, 3, padding="same", kernel_regularizer=reg)(x)
     x = layers.BatchNormalization()(x)
     x = layers.Activation("relu")(x)
-    x = cbam_block(x)
+    x = CBAMBlock(name="cbam_3")(x)
     x = layers.MaxPooling2D(2)(x)
 
     # Block 4
     x = layers.Conv2D(256, 3, padding="same", kernel_regularizer=reg)(x)
     x = layers.BatchNormalization()(x)
     x = layers.Activation("relu")(x)
-    x = cbam_block(x)
+    x = CBAMBlock(name="cbam_4")(x)
     x = layers.MaxPooling2D(2)(x)
 
     # Head
@@ -103,14 +149,13 @@ def build_cbam_cnn(input_shape=(config.IMG_SIZE, config.IMG_SIZE, config.CHANNEL
     x = layers.Dropout(0.5)(x)
     out = layers.Dense(1, activation="sigmoid", name="output")(x)
 
-    model = models.Model(inp, out, name="CNN_CBAM")
-    return model
+    return keras.Model(inp, out, name="CNN_CBAM")
 
 
-def compile_cbam_cnn(model: tf.keras.Model,
-                     lr: float = config.LEARNING_RATE) -> tf.keras.Model:
+def compile_cbam_cnn(model: keras.Model,
+                     lr: float = config.LEARNING_RATE) -> keras.Model:
     model.compile(
-        optimizer=tf.keras.optimizers.Adam(lr),
+        optimizer=keras.optimizers.Adam(lr),
         loss="binary_crossentropy",
         metrics=["accuracy"],
     )

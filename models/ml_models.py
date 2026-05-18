@@ -53,7 +53,7 @@ def get_predict_proba(model, X: np.ndarray) -> np.ndarray:
     """Returns P(fake) for each sample, regardless of model type."""
     if hasattr(model, "predict_proba"):
         return model.predict_proba(X)[:, 1]
-    # RidgeClassifier → decision_function, normalise to [0, 1]
+    # RidgeClassifier -> decision_function, normalise to [0, 1]
     scores = model.decision_function(X)
     s_min, s_max = scores.min(), scores.max()
     if s_max - s_min < 1e-9:
@@ -69,7 +69,7 @@ def save_ml_model(model, name: str):
     os.makedirs(config.MODELS_DIR, exist_ok=True)
     path = os.path.join(config.MODELS_DIR, f"{name}.pkl")
     joblib.dump(model, path)
-    print(f"Saved {name} → {path}")
+    print(f"Saved {name} -> {path}")
 
 
 def load_ml_model(name: str):

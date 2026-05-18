@@ -2,9 +2,9 @@
 Baseline CNN for deepfake detection.
 
 Architecture (fits in <2 GB VRAM at batch=32, input=128x128):
-  4 convolutional blocks (Conv → BN → ReLU → MaxPool)
+  4 convolutional blocks (Conv -> BN -> ReLU -> MaxPool)
   Global Average Pooling
-  Dense(256) → Dropout(0.5) → Dense(1, sigmoid)
+  Dense(256) -> Dropout(0.5) -> Dense(1, sigmoid)
 """
 
 import tensorflow as tf

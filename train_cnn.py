@@ -61,10 +61,16 @@ def main():
 
     plot_training_history(history, "CNN")
 
-    # 5. Evaluate on test set
+    # 5. Evaluate on test set — use ROC-optimal threshold on val set
+    from sklearn.metrics import roc_curve
     best_model = tf.keras.models.load_model(ckpt_path)
+    y_prob_val = best_model.predict(X_val, batch_size=config.BATCH_SIZE).ravel()
+    fpr, tpr, thresholds = roc_curve(y_val, y_prob_val)
+    best_thresh = float(thresholds[np.argmax(tpr - fpr)])
+    print(f"CNN optimal threshold (val): {best_thresh:.4f}")
+
     y_prob = best_model.predict(X_test, batch_size=config.BATCH_SIZE).ravel()
-    y_pred = (y_prob >= 0.5).astype(int)
+    y_pred = (y_prob >= best_thresh).astype(int)
 
     metrics = compute_metrics(y_test, y_pred, y_prob)
     print_metrics("CNN (test set)", metrics)

@@ -10,7 +10,7 @@ PLOTS_DIR   = os.path.join(OUTPUT_DIR, "plots")
 MODELS_DIR  = os.path.join(OUTPUT_DIR, "saved_models")
 RESULTS_DIR = os.path.join(OUTPUT_DIR, "results")
 
-# Image settings — 128x128 keeps VRAM well under 2 GB
+# Image settings -- 128x128 keeps VRAM well under 2 GB
 IMG_SIZE    = 128
 CHANNELS    = 3
 

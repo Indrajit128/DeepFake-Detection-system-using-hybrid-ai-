@@ -31,7 +31,7 @@ def predict_image(image_path: str, model_tag: str = "cbam"):
     """
     Returns (label_str, confidence).
     label_str: "FAKE" or "REAL"
-    confidence: probability that the image is fake (0–1)
+    confidence: probability that the image is fake (0-1)
     """
     img = load_image(image_path)
 
@@ -75,11 +75,11 @@ def main():
 
     if args.image:
         label, conf = predict_image(args.image, args.model)
-        print(f"\n{'─'*40}")
+        print(f"\n{'-'*40}")
         print(f"  File   : {os.path.basename(args.image)}")
         print(f"  Model  : {args.model.upper()}")
         print(f"  Result : {label}  (confidence: {conf:.4f})")
-        print(f"{'─'*40}\n")
+        print(f"{'-'*40}\n")
     else:
         paths = [
             os.path.join(args.dir, f)

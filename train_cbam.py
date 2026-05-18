@@ -14,8 +14,20 @@ from utils.evaluation import (
     compute_metrics, print_metrics,
     plot_confusion_matrix, plot_training_history,
 )
-from models.cbam_model import build_cbam_cnn, compile_cbam_cnn
+from models.cbam_model import (
+    build_cbam_cnn, compile_cbam_cnn,
+    ChannelMeanPool, ChannelMaxPool,
+    ChannelAttention, SpatialAttention, CBAMBlock,
+)
 import config
+
+CUSTOM_OBJECTS = {
+    "ChannelMeanPool": ChannelMeanPool,
+    "ChannelMaxPool":  ChannelMaxPool,
+    "ChannelAttention": ChannelAttention,
+    "SpatialAttention": SpatialAttention,
+    "CBAMBlock":       CBAMBlock,
+}
 
 
 def main():
@@ -61,10 +73,16 @@ def main():
 
     plot_training_history(history, "CNN_CBAM")
 
-    # 5. Evaluate on test set
-    best_model = tf.keras.models.load_model(ckpt_path)
+    # 5. Evaluate on test set -- use ROC-optimal threshold on val set
+    from sklearn.metrics import roc_curve
+    best_model = tf.keras.models.load_model(ckpt_path, custom_objects=CUSTOM_OBJECTS)
+    y_prob_val = best_model.predict(X_val, batch_size=config.BATCH_SIZE).ravel()
+    fpr, tpr, thresholds = roc_curve(y_val, y_prob_val)
+    best_thresh = float(thresholds[np.argmax(tpr - fpr)])
+    print(f"CNN+CBAM optimal threshold (val): {best_thresh:.4f}")
+
     y_prob = best_model.predict(X_test, batch_size=config.BATCH_SIZE).ravel()
-    y_pred = (y_prob >= 0.5).astype(int)
+    y_pred = (y_prob >= best_thresh).astype(int)
 
     metrics = compute_metrics(y_test, y_pred, y_prob)
     print_metrics("CNN+CBAM (test set)", metrics)

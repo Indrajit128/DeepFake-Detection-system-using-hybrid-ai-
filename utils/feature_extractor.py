@@ -68,7 +68,7 @@ class FeaturePipeline:
 
 def prepare_ml_features(X_train, X_val, X_test):
     """
-    Full pipeline: HOG extraction → StandardScaler → PCA.
+    Full pipeline: HOG extraction -> StandardScaler -> PCA.
     Returns transformed train/val/test arrays and the fitted pipeline.
     """
     print("Extracting HOG features...")
@@ -76,7 +76,7 @@ def prepare_ml_features(X_train, X_val, X_test):
     F_val   = extract_hog(X_val)
     F_test  = extract_hog(X_test)
 
-    print(f"HOG raw dim: {F_train.shape[1]}  →  reducing to {config.PCA_COMPONENTS} via PCA")
+    print(f"HOG raw dim: {F_train.shape[1]}  ->  reducing to {config.PCA_COMPONENTS} via PCA")
     pipe = FeaturePipeline()
     F_train_r = pipe.fit_transform(F_train)
     F_val_r   = pipe.transform(F_val)
