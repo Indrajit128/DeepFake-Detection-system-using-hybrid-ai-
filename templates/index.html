@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deepfake Detection System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --border-color: rgba(255, 255, 255, 0.1);
+            --primary: #3b82f6;
+            --primary-hover: #2563eb;
+            --fake-color: #ef4444;
+            --real-color: #10b981;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #020617, #0f172a, #1e1b4b);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+        }
+
+        .glass-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--border-color);
+            border-radius: 24px;
+            padding: 3rem 2rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(to right, #60a5fa, #c084fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            color: var(--text-muted);
+            margin-bottom: 2.5rem;
+            font-size: 1.1rem;
+        }
+
+        .upload-area {
+            border: 2px dashed rgba(59, 130, 246, 0.5);
+            border-radius: 16px;
+            padding: 3rem 2rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            background: rgba(15, 23, 42, 0.4);
+            margin-bottom: 2rem;
+        }
+
+        .upload-area:hover, .upload-area.dragover {
+            border-color: var(--primary);
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            color: var(--primary);
+            opacity: 0.8;
+        }
+
+        #file-input {
+            display: none;
+        }
+
+        .preview-container {
+            display: none;
+            margin-bottom: 2rem;
+            position: relative;
+        }
+
+        .preview-image {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.3);
+            border: 1px solid var(--border-color);
+            object-fit: cover;
+        }
+
+        .btn-analyze {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border-radius: 12px;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 14px 0 rgba(59, 130, 246, 0.39);
+        }
+
+        .btn-analyze:hover {
+            background: var(--primary-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+        }
+
+        .btn-analyze:disabled {
+            background: #475569;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* Loading Spinner */
+        .spinner {
+            display: none;
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(255, 255, 255, 0.1);
+            border-left-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1.5rem auto;
+        }
+
+        @keyframes spin {
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Results Area */
+        .results-container {
+            display: none;
+            margin-top: 2.5rem;
+            padding: 2rem;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+            animation: fadeIn 0.5s ease forwards;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .result-label {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .result-label.fake { color: var(--fake-color); }
+        .result-label.real { color: var(--real-color); }
+
+        .confidence-text {
+            font-size: 1.1rem;
+            color: var(--text-muted);
+            margin-bottom: 1rem;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 1rem;
+        }
+
+        .progress-fill {
+            height: 100%;
+            width: 0%;
+            transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .mock-badge {
+            display: inline-block;
+            background: rgba(245, 158, 11, 0.2);
+            color: #fbbf24;
+            padding: 0.25rem 0.75rem;
+            border-radius: 999px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-top: 1rem;
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+
+        .reset-btn {
+            background: transparent;
+            color: var(--text-muted);
+            border: 1px solid var(--border-color);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 1.5rem;
+            transition: all 0.2s;
+        }
+
+        .reset-btn:hover {
+            background: rgba(255,255,255,0.05);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="glass-card">
+        <div class="header">
+            <h1>Deepfake Detector</h1>
+            <p>Upload an image to analyze for AI manipulation</p>
+        </div>
+
+        <form id="upload-form">
+            <div class="upload-area" id="drop-zone">
+                <div class="upload-icon">📸</div>
+                <h3 style="margin-bottom: 0.5rem;">Drag & Drop Image</h3>
+                <p style="color: var(--text-muted); font-size: 0.9rem;">or click to browse files</p>
+                <input type="file" id="file-input" accept="image/*" required>
+            </div>
+
+            <div class="preview-container" id="preview-container">
+                <img id="image-preview" class="preview-image" src="" alt="Preview">
+            </div>
+
+            <button type="submit" class="btn-analyze" id="analyze-btn" disabled>Analyze Image</button>
+        </form>
+
+        <div class="spinner" id="loading-spinner"></div>
+
+        <div class="results-container" id="results">
+            <div class="result-label" id="result-label">REAL</div>
+            <div class="confidence-text">Confidence: <span id="confidence-val">0%</span></div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress-fill"></div>
+            </div>
+            <div id="mock-notice" class="mock-badge" style="display: none;">Mocked Result (Vercel Mode)</div>
+            <button class="reset-btn" id="reset-btn">Analyze Another Image</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const dropZone = document.getElementById('drop-zone');
+    const fileInput = document.getElementById('file-input');
+    const form = document.getElementById('upload-form');
+    const previewContainer = document.getElementById('preview-container');
+    const imagePreview = document.getElementById('image-preview');
+    const analyzeBtn = document.getElementById('analyze-btn');
+    const loadingSpinner = document.getElementById('loading-spinner');
+    const resultsContainer = document.getElementById('results');
+    const resultLabel = document.getElementById('result-label');
+    const confidenceVal = document.getElementById('confidence-val');
+    const progressFill = document.getElementById('progress-fill');
+    const resetBtn = document.getElementById('reset-btn');
+    const mockNotice = document.getElementById('mock-notice');
+
+    let currentFile = null;
+
+    // Drag and Drop Handlers
+    dropZone.addEventListener('click', () => fileInput.click());
+    
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, preventDefaults, false);
+    });
+
+    function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dropZone.addEventListener(eventName, () => dropZone.classList.add('dragover'), false);
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, () => dropZone.classList.remove('dragover'), false);
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        handleFiles(files);
+    });
+
+    fileInput.addEventListener('change', function() {
+        handleFiles(this.files);
+    });
+
+    function handleFiles(files) {
+        if (files.length > 0) {
+            const file = files[0];
+            if (file.type.startsWith('image/')) {
+                currentFile = file;
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    imagePreview.src = e.target.result;
+                    dropZone.style.display = 'none';
+                    previewContainer.style.display = 'block';
+                    analyzeBtn.disabled = false;
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+    }
+
+    resetBtn.addEventListener('click', () => {
+        resultsContainer.style.display = 'none';
+        previewContainer.style.display = 'none';
+        dropZone.style.display = 'block';
+        analyzeBtn.style.display = 'block';
+        analyzeBtn.disabled = true;
+        fileInput.value = '';
+        currentFile = null;
+    });
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        if (!currentFile) return;
+
+        // UI State: Loading
+        analyzeBtn.style.display = 'none';
+        loadingSpinner.style.display = 'block';
+        resultsContainer.style.display = 'none';
+
+        const formData = new FormData();
+        formData.append('image', currentFile);
+
+        try {
+            const response = await fetch('/predict', {
+                method: 'POST',
+                body: formData
+            });
+            
+            const data = await response.json();
+            
+            if (!response.ok) throw new Error(data.error || 'Server error');
+
+            // UI State: Results
+            loadingSpinner.style.display = 'none';
+            resultsContainer.style.display = 'block';
+            
+            resultLabel.textContent = data.label;
+            resultLabel.className = 'result-label ' + data.label.toLowerCase();
+            
+            const confPercent = (data.confidence * 100).toFixed(1);
+            confidenceVal.textContent = confPercent + '%';
+            
+            progressFill.style.width = confPercent + '%';
+            progressFill.style.background = data.label === 'FAKE' ? 'var(--fake-color)' : 'var(--real-color)';
+            
+            if (data.mocked) {
+                mockNotice.style.display = 'inline-block';
+            } else {
+                mockNotice.style.display = 'none';
+            }
+
+        } catch (error) {
+            alert('Error analyzing image: ' + error.message);
+            loadingSpinner.style.display = 'none';
+            analyzeBtn.style.display = 'block';
+        }
+    });
+</script>
+
+</body>
+</html>
