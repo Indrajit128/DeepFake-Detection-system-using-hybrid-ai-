@@ -4,740 +4,312 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Deepfake Detection System – Hybrid AI</title>
-    <meta name="description" content="AI-powered Deepfake Detection using Hybrid Models: CBAM, CNN, SVM, Ridge, and Lasso. Upload an image to detect manipulation instantly.">
+    <meta name="description" content="AI-powered Deepfake Detection using Hybrid Models: CBAM, CNN, SVM, Ridge, Lasso.">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
             --bg: #070b14;
-            --surface: rgba(15, 23, 42, 0.85);
-            --surface2: rgba(30, 41, 59, 0.6);
-            --border: rgba(148, 163, 184, 0.12);
+            --surface: rgba(15,23,42,0.90);
+            --surface2: rgba(30,41,59,0.65);
+            --border: rgba(148,163,184,0.12);
             --primary: #6366f1;
-            --primary-glow: rgba(99, 102, 241, 0.35);
+            --primary-glow: rgba(99,102,241,0.3);
             --accent: #06b6d4;
             --fake: #f43f5e;
-            --fake-glow: rgba(244, 63, 94, 0.3);
+            --fake-glow: rgba(244,63,94,0.25);
             --real: #10b981;
-            --real-glow: rgba(16, 185, 129, 0.3);
+            --real-glow: rgba(16,185,129,0.25);
+            --warn: #f59e0b;
             --text: #f1f5f9;
             --muted: #64748b;
             --subtle: #1e293b;
         }
-
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-
-        body {
-            font-family: 'Inter', sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            min-height: 100vh;
-            overflow-x: hidden;
-        }
-
-        /* Animated background */
-        body::before {
-            content: '';
-            position: fixed;
-            inset: 0;
-            background:
-                radial-gradient(ellipse 80% 60% at 10% 10%, rgba(99,102,241,0.12) 0%, transparent 60%),
-                radial-gradient(ellipse 60% 50% at 90% 80%, rgba(6,182,212,0.10) 0%, transparent 60%),
-                radial-gradient(ellipse 50% 40% at 50% 50%, rgba(244,63,94,0.05) 0%, transparent 70%);
-            pointer-events: none;
-            z-index: 0;
-        }
+        *{box-sizing:border-box;margin:0;padding:0;}
+        html{scroll-behavior:smooth;}
+        body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
+        body::before{content:'';position:fixed;inset:0;background:
+            radial-gradient(ellipse 70% 50% at 15% 15%,rgba(99,102,241,.13) 0%,transparent 60%),
+            radial-gradient(ellipse 60% 45% at 85% 80%,rgba(6,182,212,.10) 0%,transparent 60%),
+            radial-gradient(ellipse 50% 40% at 50% 50%,rgba(244,63,94,.05) 0%,transparent 70%);
+            pointer-events:none;z-index:0;}
 
         /* ── NAV ── */
-        nav {
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 1rem 2.5rem;
-            background: rgba(7, 11, 20, 0.85);
-            backdrop-filter: blur(20px);
-            border-bottom: 1px solid var(--border);
-        }
-
-        .nav-brand {
-            display: flex;
-            align-items: center;
-            gap: 0.6rem;
-            font-size: 1.1rem;
-            font-weight: 700;
-            background: linear-gradient(135deg, #6366f1, #06b6d4);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .nav-brand .icon { font-size: 1.4rem; }
-
-        .nav-tabs {
-            display: flex;
-            gap: 0.25rem;
-            background: var(--subtle);
-            border-radius: 10px;
-            padding: 4px;
-            border: 1px solid var(--border);
-        }
-
-        .nav-tab {
-            padding: 0.45rem 1.2rem;
-            border-radius: 7px;
-            font-size: 0.88rem;
-            font-weight: 500;
-            cursor: pointer;
-            border: none;
-            background: transparent;
-            color: var(--muted);
-            transition: all 0.25s ease;
-        }
-
-        .nav-tab.active {
-            background: var(--primary);
-            color: white;
-            box-shadow: 0 2px 8px var(--primary-glow);
-        }
-
-        .status-badge {
-            display: flex;
-            align-items: center;
-            gap: 0.4rem;
-            font-size: 0.78rem;
-            font-weight: 500;
-            color: var(--muted);
-            background: var(--subtle);
-            padding: 0.3rem 0.75rem;
-            border-radius: 20px;
-            border: 1px solid var(--border);
-        }
-
-        .status-dot {
-            width: 7px; height: 7px;
-            background: var(--real);
-            border-radius: 50%;
-            box-shadow: 0 0 6px var(--real);
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
+        nav{position:sticky;top:0;z-index:200;display:flex;align-items:center;justify-content:space-between;
+            padding:.9rem 2rem;background:rgba(7,11,20,.90);backdrop-filter:blur(20px);
+            border-bottom:1px solid var(--border);}
+        .nav-brand{display:flex;align-items:center;gap:.55rem;font-size:1.05rem;font-weight:800;
+            background:linear-gradient(135deg,#6366f1,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+        .nav-tabs{display:flex;gap:.2rem;background:var(--subtle);border-radius:10px;padding:4px;border:1px solid var(--border);}
+        .nav-tab{padding:.42rem 1.1rem;border-radius:7px;font-size:.85rem;font-weight:600;cursor:pointer;
+            border:none;background:transparent;color:var(--muted);transition:all .2s;}
+        .nav-tab.active{background:var(--primary);color:#fff;box-shadow:0 2px 10px var(--primary-glow);}
+        .mode-pill{display:flex;align-items:center;gap:.4rem;font-size:.75rem;font-weight:600;
+            padding:.3rem .8rem;border-radius:20px;border:1px solid var(--border);background:var(--subtle);}
+        .dot{width:7px;height:7px;border-radius:50%;animation:pulse 2s infinite;}
+        .dot.green{background:var(--real);box-shadow:0 0 6px var(--real);}
+        .dot.amber{background:var(--warn);box-shadow:0 0 6px var(--warn);}
+        @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.45;}}
 
         /* ── PAGES ── */
-        .page { display: none; position: relative; z-index: 1; }
-        .page.active { display: block; }
+        .page{display:none;position:relative;z-index:1;}
+        .page.active{display:block;}
 
-        /* ── DETECT PAGE ── */
-        #page-detect {
-            display: none;
-            min-height: calc(100vh - 65px);
-            padding: 3rem 1.5rem;
-        }
-        #page-detect.active { display: flex; align-items: flex-start; justify-content: center; gap: 2rem; flex-wrap: wrap; }
+        /* ══ DETECT PAGE ══ */
+        #page-detect.active{display:flex;flex-wrap:wrap;gap:1.5rem;align-items:flex-start;
+            justify-content:center;padding:2.5rem 1.5rem;min-height:calc(100vh - 65px);}
 
         /* Upload card */
-        .upload-card {
-            background: var(--surface);
-            backdrop-filter: blur(20px);
-            border: 1px solid var(--border);
-            border-radius: 20px;
-            padding: 2.5rem;
-            width: 100%;
-            max-width: 480px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
-        }
+        .upload-card{background:var(--surface);backdrop-filter:blur(20px);border:1px solid var(--border);
+            border-radius:20px;padding:2.2rem;width:100%;max-width:460px;
+            box-shadow:0 20px 60px rgba(0,0,0,.4);}
+        .card-title{font-size:1.4rem;font-weight:800;margin-bottom:.3rem;}
+        .card-subtitle{font-size:.85rem;color:var(--muted);margin-bottom:1.6rem;}
 
-        .card-title {
-            font-size: 1.5rem;
-            font-weight: 700;
-            margin-bottom: 0.4rem;
-        }
+        .drop-zone{border:2px dashed rgba(99,102,241,.4);border-radius:14px;padding:2.2rem 1.5rem;
+            text-align:center;cursor:pointer;transition:all .3s;background:rgba(99,102,241,.03);
+            margin-bottom:1.4rem;}
+        .drop-zone:hover,.drop-zone.dragover{border-color:var(--primary);background:rgba(99,102,241,.08);transform:scale(1.01);}
+        .drop-icon{font-size:2.6rem;margin-bottom:.6rem;}
+        .drop-zone h3{font-size:.95rem;font-weight:700;margin-bottom:.3rem;}
+        .drop-zone p{font-size:.78rem;color:var(--muted);}
+        #file-input{display:none;}
 
-        .card-subtitle {
-            font-size: 0.9rem;
-            color: var(--muted);
-            margin-bottom: 1.8rem;
-        }
+        .preview-wrap{display:none;margin-bottom:1.4rem;text-align:center;}
+        .preview-wrap img{max-width:100%;max-height:240px;border-radius:12px;
+            border:1px solid var(--border);box-shadow:0 8px 28px rgba(0,0,0,.3);object-fit:cover;}
+        .filename-badge{display:inline-flex;align-items:center;gap:.4rem;font-size:.77rem;
+            color:var(--muted);margin-top:.5rem;background:var(--subtle);
+            padding:.22rem .7rem;border-radius:20px;}
 
-        .drop-zone {
-            border: 2px dashed rgba(99,102,241,0.4);
-            border-radius: 14px;
-            padding: 2.5rem 1.5rem;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s;
-            background: rgba(99,102,241,0.03);
-            margin-bottom: 1.5rem;
-        }
+        .field-label{font-size:.75rem;font-weight:700;color:var(--muted);
+            text-transform:uppercase;letter-spacing:.06em;margin-bottom:.5rem;}
 
-        .drop-zone:hover, .drop-zone.dragover {
-            border-color: var(--primary);
-            background: rgba(99,102,241,0.08);
-            transform: scale(1.01);
-        }
+        .model-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:.35rem;margin-bottom:1.4rem;}
+        .model-chip{padding:.48rem .1rem;border-radius:8px;border:1px solid var(--border);
+            background:var(--surface2);color:var(--muted);font-size:.78rem;font-weight:700;
+            text-align:center;cursor:pointer;transition:all .2s;}
+        .model-chip:hover{border-color:var(--primary);color:var(--text);}
+        .model-chip.selected{background:var(--primary);border-color:var(--primary);color:#fff;
+            box-shadow:0 2px 12px var(--primary-glow);}
 
-        .drop-icon { font-size: 2.8rem; margin-bottom: 0.75rem; }
+        .btn-analyze{width:100%;padding:.85rem;background:linear-gradient(135deg,var(--primary),#8b5cf6);
+            border:none;border-radius:12px;color:#fff;font-size:.95rem;font-weight:800;cursor:pointer;
+            transition:all .3s;box-shadow:0 4px 20px var(--primary-glow);letter-spacing:.02em;}
+        .btn-analyze:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 8px 28px var(--primary-glow);}
+        .btn-analyze:disabled{background:var(--subtle);color:var(--muted);box-shadow:none;cursor:not-allowed;}
+        .btn-reset{width:100%;padding:.65rem;background:transparent;border:1px solid var(--border);
+            border-radius:12px;color:var(--muted);font-size:.88rem;cursor:pointer;
+            transition:all .2s;margin-top:.7rem;}
+        .btn-reset:hover{background:var(--surface2);color:var(--text);}
 
-        .drop-zone h3 { font-size: 1rem; font-weight: 600; margin-bottom: 0.3rem; }
-        .drop-zone p { font-size: 0.82rem; color: var(--muted); }
+        /* Result + loading cards */
+        .result-card{background:var(--surface);backdrop-filter:blur(20px);border:1px solid var(--border);
+            border-radius:20px;padding:2.2rem;width:100%;max-width:460px;
+            box-shadow:0 20px 60px rgba(0,0,0,.4);display:none;}
+        .result-card.show{display:block;animation:fadeUp .4s ease forwards;}
+        @keyframes fadeUp{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
 
-        #file-input { display: none; }
+        .spinner{width:44px;height:44px;border:4px solid rgba(99,102,241,.15);
+            border-top-color:var(--primary);border-radius:50%;animation:spin .8s linear infinite;
+            margin:0 auto 1rem auto;}
+        @keyframes spin{to{transform:rotate(360deg);}}
+        .loading-text{color:var(--muted);font-size:.88rem;text-align:center;}
+        .loading-model{color:var(--primary);font-weight:700;font-size:.82rem;
+            text-align:center;margin-top:.3rem;}
 
-        .preview-wrap { display: none; margin-bottom: 1.5rem; text-align: center; }
-        .preview-wrap img {
-            max-width: 100%; max-height: 260px;
-            border-radius: 12px;
-            border: 1px solid var(--border);
-            box-shadow: 0 8px 30px rgba(0,0,0,0.3);
-            object-fit: cover;
-        }
+        .result-verdict{font-size:3.2rem;font-weight:900;letter-spacing:.06em;text-align:center;margin-bottom:.25rem;}
+        .result-verdict.fake{color:var(--fake);text-shadow:0 0 30px var(--fake-glow);}
+        .result-verdict.real{color:var(--real);text-shadow:0 0 30px var(--real-glow);}
+        .verdict-icon{font-size:2.8rem;text-align:center;margin-bottom:.4rem;}
+        .result-meta{text-align:center;font-size:.78rem;color:var(--muted);margin-bottom:1.6rem;}
 
-        .filename-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.4rem;
-            font-size: 0.8rem;
-            color: var(--muted);
-            margin-top: 0.6rem;
-            background: var(--subtle);
-            padding: 0.25rem 0.75rem;
-            border-radius: 20px;
-        }
-
-        /* Model selector */
-        .field-label {
-            font-size: 0.82rem;
-            font-weight: 600;
-            color: var(--muted);
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            margin-bottom: 0.5rem;
-        }
-
-        .model-grid {
-            display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            gap: 0.4rem;
-            margin-bottom: 1.5rem;
-        }
-
-        .model-chip {
-            padding: 0.5rem 0.2rem;
-            border-radius: 8px;
-            border: 1px solid var(--border);
-            background: var(--surface2);
-            color: var(--muted);
-            font-size: 0.8rem;
-            font-weight: 600;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .model-chip:hover { border-color: var(--primary); color: var(--text); }
-
-        .model-chip.selected {
-            background: var(--primary);
-            border-color: var(--primary);
-            color: white;
-            box-shadow: 0 2px 12px var(--primary-glow);
-        }
-
-        /* CTA button */
-        .btn-analyze {
-            width: 100%;
-            padding: 0.9rem;
-            background: linear-gradient(135deg, var(--primary), #8b5cf6);
-            border: none;
-            border-radius: 12px;
-            color: white;
-            font-size: 1rem;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.3s;
-            box-shadow: 0 4px 20px var(--primary-glow);
-            letter-spacing: 0.02em;
-        }
-
-        .btn-analyze:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 28px var(--primary-glow);
-        }
-
-        .btn-analyze:disabled {
-            background: var(--subtle);
-            color: var(--muted);
-            box-shadow: none;
-            cursor: not-allowed;
-        }
-
-        .btn-reset {
-            width: 100%;
-            padding: 0.7rem;
-            background: transparent;
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            color: var(--muted);
-            font-size: 0.9rem;
-            cursor: pointer;
-            transition: all 0.2s;
-            margin-top: 0.75rem;
-        }
-
-        .btn-reset:hover { background: var(--surface2); color: var(--text); }
-
-        /* Result card */
-        .result-card {
-            background: var(--surface);
-            backdrop-filter: blur(20px);
-            border: 1px solid var(--border);
-            border-radius: 20px;
-            padding: 2.5rem;
-            width: 100%;
-            max-width: 400px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
-            display: none;
-            animation: slideIn 0.4s ease forwards;
-        }
-
-        @keyframes slideIn {
-            from { opacity: 0; transform: translateX(20px); }
-            to   { opacity: 1; transform: translateX(0); }
-        }
-
-        .result-card.show { display: block; }
-
-        .result-verdict {
-            font-size: 3.5rem;
-            font-weight: 800;
-            letter-spacing: 0.05em;
-            text-align: center;
-            margin-bottom: 0.3rem;
-        }
-
-        .result-verdict.fake {
-            color: var(--fake);
-            text-shadow: 0 0 30px var(--fake-glow);
-        }
-        .result-verdict.real {
-            color: var(--real);
-            text-shadow: 0 0 30px var(--real-glow);
-        }
-
-        .verdict-icon {
-            font-size: 3rem;
-            text-align: center;
-            margin-bottom: 0.5rem;
-        }
-
-        .result-model-tag {
-            text-align: center;
-            font-size: 0.8rem;
-            color: var(--muted);
-            margin-bottom: 1.8rem;
-        }
-
-        .confidence-block { margin-bottom: 1.5rem; }
-
-        .conf-header {
-            display: flex;
-            justify-content: space-between;
-            font-size: 0.85rem;
-            color: var(--muted);
-            margin-bottom: 0.5rem;
-        }
-
-        .conf-value { font-weight: 700; font-size: 1rem; color: var(--text); }
-
-        .progress-track {
-            height: 10px;
-            background: rgba(255,255,255,0.06);
-            border-radius: 6px;
-            overflow: hidden;
-        }
-
-        .progress-bar {
-            height: 100%;
-            width: 0%;
-            border-radius: 6px;
-            transition: width 1.2s cubic-bezier(0.4,0,0.2,1);
-        }
+        .conf-header{display:flex;justify-content:space-between;font-size:.82rem;
+            color:var(--muted);margin-bottom:.45rem;}
+        .conf-value{font-weight:800;font-size:.95rem;color:var(--text);}
+        .progress-track{height:10px;background:rgba(255,255,255,.06);border-radius:6px;
+            overflow:hidden;margin-bottom:1.4rem;}
+        .progress-bar{height:100%;width:0%;border-radius:6px;
+            transition:width 1.1s cubic-bezier(.4,0,.2,1);}
 
         /* Stats grid */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 0.75rem;
-            margin-top: 1.5rem;
-        }
+        .stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:.65rem;margin-bottom:1.2rem;}
+        .stat-box{background:var(--surface2);border:1px solid var(--border);border-radius:10px;
+            padding:.8rem;text-align:center;}
+        .stat-label{font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;}
+        .stat-value{font-size:1.05rem;font-weight:800;margin-top:.18rem;}
 
-        .stat-box {
-            background: var(--surface2);
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            padding: 0.85rem;
-            text-align: center;
-        }
+        /* Sub-scores breakdown */
+        .sub-scores{margin-top:1rem;}
+        .sub-score-row{display:flex;align-items:center;gap:.6rem;margin-bottom:.45rem;}
+        .sub-name{font-size:.72rem;font-weight:600;color:var(--muted);width:80px;text-align:right;flex-shrink:0;}
+        .sub-track{flex:1;height:6px;background:rgba(255,255,255,.06);border-radius:3px;overflow:hidden;}
+        .sub-fill{height:100%;border-radius:3px;transition:width 1s ease;}
+        .sub-val{font-size:.7rem;font-weight:700;width:38px;text-align:right;color:var(--muted);}
 
-        .stat-label { font-size: 0.72rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
-        .stat-value { font-size: 1.1rem; font-weight: 700; margin-top: 0.2rem; }
+        .forensics-label{font-size:.7rem;font-weight:700;color:var(--muted);
+            text-transform:uppercase;letter-spacing:.06em;margin-bottom:.55rem;margin-top:1.1rem;}
 
-        .mock-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.4rem;
-            background: rgba(245, 158, 11, 0.12);
-            color: #fbbf24;
-            padding: 0.3rem 0.85rem;
-            border-radius: 20px;
-            font-size: 0.78rem;
-            font-weight: 600;
-            border: 1px solid rgba(245,158,11,0.25);
-            margin-top: 1rem;
-            width: 100%;
-            justify-content: center;
-        }
+        .mode-badge{display:inline-flex;align-items:center;gap:.35rem;font-size:.72rem;font-weight:700;
+            padding:.25rem .7rem;border-radius:20px;margin-top:.8rem;width:100%;justify-content:center;}
+        .mode-badge.forensics{background:rgba(6,182,212,.12);color:#22d3ee;border:1px solid rgba(6,182,212,.25);}
+        .mode-badge.full{background:rgba(16,185,129,.12);color:var(--real);border:1px solid rgba(16,185,129,.25);}
 
-        /* Loading overlay */
-        .loading-state {
-            display: none;
-            text-align: center;
-            padding: 3rem 2rem;
-        }
+        /* ══ REAL-TIME ANALYTICS STRIP ══ */
+        #page-detect.active .analytics-strip{
+            width:100%;max-width:940px;order:99;
+            background:var(--surface);backdrop-filter:blur(20px);border:1px solid var(--border);
+            border-radius:20px;padding:1.6rem 2rem;box-shadow:0 20px 60px rgba(0,0,0,.4);}
+        .analytics-title{font-size:.95rem;font-weight:800;margin-bottom:1.2rem;
+            display:flex;align-items:center;gap:.5rem;}
+        .live-chip{font-size:.65rem;font-weight:800;background:rgba(244,63,94,.15);color:var(--fake);
+            padding:.12rem .5rem;border-radius:20px;border:1px solid rgba(244,63,94,.3);
+            animation:pulse 1.5s infinite;}
+        .analytics-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:.75rem;margin-bottom:1.4rem;}
+        .a-kpi{background:var(--surface2);border:1px solid var(--border);border-radius:12px;
+            padding:1rem;text-align:center;}
+        .a-kpi-val{font-size:1.5rem;font-weight:900;}
+        .a-kpi-label{font-size:.7rem;color:var(--muted);margin-top:.2rem;}
 
-        .spinner {
-            width: 48px; height: 48px;
-            border: 4px solid rgba(99,102,241,0.15);
-            border-top-color: var(--primary);
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-            margin: 0 auto 1rem auto;
-        }
+        .split-bar-wrap{margin-bottom:1.4rem;}
+        .split-label{display:flex;justify-content:space-between;font-size:.75rem;margin-bottom:.4rem;}
+        .split-track{height:14px;background:rgba(255,255,255,.06);border-radius:7px;overflow:hidden;display:flex;}
+        .split-fake{height:100%;background:var(--fake);transition:width .8s ease;}
+        .split-real{height:100%;background:var(--real);transition:width .8s ease;}
 
-        @keyframes spin { to { transform: rotate(360deg); } }
+        .history-title{font-size:.78rem;font-weight:700;color:var(--muted);
+            text-transform:uppercase;letter-spacing:.05em;margin-bottom:.6rem;}
+        .history-list{display:flex;flex-direction:column;gap:.4rem;max-height:200px;overflow-y:auto;}
+        .history-item{display:flex;align-items:center;gap:.75rem;padding:.6rem .85rem;
+            background:var(--surface2);border:1px solid var(--border);border-radius:10px;font-size:.8rem;}
+        .history-verdict{font-weight:800;width:40px;font-size:.78rem;}
+        .history-verdict.fake{color:var(--fake);}
+        .history-verdict.real{color:var(--real);}
+        .history-name{flex:1;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+        .history-conf{font-weight:700;font-size:.78rem;}
+        .history-model{background:var(--subtle);border-radius:4px;padding:.1rem .4rem;
+            font-size:.68rem;font-weight:700;color:var(--muted);}
+        .history-time{font-size:.68rem;color:var(--muted);}
+        .no-history{text-align:center;color:var(--muted);font-size:.83rem;padding:1.5rem;}
 
-        .loading-text { color: var(--muted); font-size: 0.9rem; }
-        .loading-model { color: var(--primary); font-weight: 600; font-size: 0.85rem; margin-top: 0.3rem; }
+        .btn-clear{background:transparent;border:1px solid var(--border);color:var(--muted);
+            font-size:.72rem;padding:.25rem .7rem;border-radius:8px;cursor:pointer;
+            transition:all .2s;margin-left:auto;display:block;margin-top:.5rem;}
+        .btn-clear:hover{background:var(--surface2);color:var(--text);}
 
-        /* ── DASHBOARD PAGE ── */
-        #page-dashboard {
-            display: none;
-            padding: 3rem 2rem;
-            max-width: 1100px;
-            margin: 0 auto;
-        }
-        #page-dashboard.active { display: block; }
+        /* ══ DASHBOARD PAGE ══ */
+        #page-dashboard{padding:2.5rem 2rem;max-width:1100px;margin:0 auto;}
+        .dash-header{margin-bottom:2rem;}
+        .dash-header h1{font-size:1.9rem;font-weight:900;
+            background:linear-gradient(135deg,#6366f1,#06b6d4);
+            -webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:.3rem;}
+        .dash-header p{color:var(--muted);font-size:.9rem;}
 
-        .dash-header {
-            margin-bottom: 2.5rem;
-        }
+        .kpi-strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(175px,1fr));gap:.9rem;margin-bottom:2rem;}
+        .kpi-card{background:var(--surface);backdrop-filter:blur(20px);border:1px solid var(--border);
+            border-radius:16px;padding:1.3rem 1.4rem;box-shadow:0 8px 28px rgba(0,0,0,.2);
+            transition:transform .2s,box-shadow .2s;}
+        .kpi-card:hover{transform:translateY(-3px);box-shadow:0 14px 38px rgba(0,0,0,.3);}
+        .kpi-icon{font-size:1.5rem;margin-bottom:.45rem;}
+        .kpi-label{font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;}
+        .kpi-value{font-size:1.6rem;font-weight:900;margin-top:.18rem;}
+        .kpi-sub{font-size:.74rem;color:var(--muted);margin-top:.1rem;}
 
-        .dash-header h1 {
-            font-size: 2rem;
-            font-weight: 800;
-            background: linear-gradient(135deg, #6366f1, #06b6d4);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin-bottom: 0.4rem;
-        }
+        .section-title{font-size:1rem;font-weight:800;margin-bottom:.9rem;display:flex;align-items:center;gap:.45rem;}
+        .table-card{background:var(--surface);backdrop-filter:blur(20px);border:1px solid var(--border);
+            border-radius:18px;overflow:hidden;box-shadow:0 12px 40px rgba(0,0,0,.25);margin-bottom:2rem;}
+        table{width:100%;border-collapse:collapse;}
+        thead tr{background:rgba(99,102,241,.1);border-bottom:1px solid var(--border);}
+        th{padding:.9rem 1.1rem;text-align:left;font-size:.73rem;font-weight:700;color:var(--muted);
+            text-transform:uppercase;letter-spacing:.06em;}
+        tbody tr{border-bottom:1px solid var(--border);transition:background .2s;}
+        tbody tr:last-child{border-bottom:none;}
+        tbody tr:hover{background:rgba(255,255,255,.03);}
+        td{padding:.9rem 1.1rem;font-size:.88rem;}
+        .model-name-cell{display:flex;align-items:center;gap:.5rem;font-weight:800;}
+        .model-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+        .best-badge{display:inline-flex;align-items:center;gap:.3rem;background:rgba(16,185,129,.12);
+            color:var(--real);font-size:.67rem;font-weight:800;padding:.12rem .5rem;
+            border-radius:20px;border:1px solid rgba(16,185,129,.2);margin-left:.35rem;}
+        .metric-cell{min-width:130px;}
+        .mini-bar{height:5px;background:rgba(255,255,255,.06);border-radius:3px;margin-top:4px;}
+        .mini-fill{height:100%;border-radius:3px;}
 
-        .dash-header p { color: var(--muted); font-size: 0.95rem; }
+        .arch-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(195px,1fr));gap:.9rem;margin-bottom:2rem;}
+        .arch-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;
+            padding:1.2rem;transition:all .25s;}
+        .arch-card:hover{border-color:var(--primary);box-shadow:0 0 20px rgba(99,102,241,.1);}
+        .arch-card h4{font-size:.9rem;font-weight:800;margin-bottom:.3rem;
+            display:flex;align-items:center;gap:.35rem;flex-wrap:wrap;}
+        .arch-card p{font-size:.77rem;color:var(--muted);line-height:1.55;}
+        .arch-type{font-size:.65rem;font-weight:700;padding:.1rem .45rem;border-radius:20px;margin-left:auto;}
+        .type-dl{background:rgba(99,102,241,.15);color:#818cf8;}
+        .type-ml{background:rgba(6,182,212,.15);color:#22d3ee;}
 
-        /* KPI strip */
-        .kpi-strip {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 1rem;
-            margin-bottom: 2.5rem;
-        }
+        .pipeline-card{background:var(--surface);border:1px solid var(--border);border-radius:18px;
+            padding:1.8rem;margin-bottom:2rem;}
+        .pipeline-steps{display:flex;align-items:center;flex-wrap:wrap;gap:0;margin-top:1rem;}
+        .pipeline-step{background:var(--surface2);border:1px solid var(--border);border-radius:10px;
+            padding:.75rem .9rem;font-size:.78rem;font-weight:700;display:flex;flex-direction:column;
+            align-items:center;gap:.25rem;min-width:90px;text-align:center;}
+        .step-icon{font-size:1.3rem;}
+        .step-label{color:var(--muted);font-size:.66rem;}
+        .pipeline-arrow{color:var(--primary);font-size:1.2rem;padding:0 .25rem;opacity:.5;}
 
-        .kpi-card {
-            background: var(--surface);
-            backdrop-filter: blur(20px);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 1.4rem 1.5rem;
-            box-shadow: 0 8px 30px rgba(0,0,0,0.2);
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
+        .dataset-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:.7rem;}
+        .dataset-stat{background:var(--surface2);border:1px solid var(--border);border-radius:12px;
+            padding:.9rem;text-align:center;}
+        .ds-val{font-size:1.5rem;font-weight:900;}
+        .ds-label{font-size:.72rem;color:var(--muted);margin-top:.18rem;}
 
-        .kpi-card:hover { transform: translateY(-3px); box-shadow: 0 12px 40px rgba(0,0,0,0.3); }
+        .loading-metrics{text-align:center;padding:2.5rem;color:var(--muted);font-size:.88rem;}
 
-        .kpi-icon { font-size: 1.6rem; margin-bottom: 0.5rem; }
-        .kpi-label { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
-        .kpi-value { font-size: 1.7rem; font-weight: 800; margin-top: 0.2rem; }
-        .kpi-sub { font-size: 0.78rem; color: var(--muted); margin-top: 0.1rem; }
-
-        /* Model performance table */
-        .section-title {
-            font-size: 1.1rem;
-            font-weight: 700;
-            margin-bottom: 1rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .table-card {
-            background: var(--surface);
-            backdrop-filter: blur(20px);
-            border: 1px solid var(--border);
-            border-radius: 18px;
-            overflow: hidden;
-            box-shadow: 0 12px 40px rgba(0,0,0,0.25);
-            margin-bottom: 2.5rem;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        thead tr {
-            background: rgba(99,102,241,0.1);
-            border-bottom: 1px solid var(--border);
-        }
-
-        th {
-            padding: 1rem 1.25rem;
-            text-align: left;
-            font-size: 0.78rem;
-            font-weight: 700;
-            color: var(--muted);
-            text-transform: uppercase;
-            letter-spacing: 0.06em;
-        }
-
-        tbody tr {
-            border-bottom: 1px solid var(--border);
-            transition: background 0.2s;
-        }
-
-        tbody tr:last-child { border-bottom: none; }
-        tbody tr:hover { background: rgba(255,255,255,0.03); }
-
-        td {
-            padding: 1rem 1.25rem;
-            font-size: 0.9rem;
-        }
-
-        .model-name {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-weight: 700;
-        }
-
-        .model-badge {
-            display: inline-block;
-            width: 8px; height: 8px;
-            border-radius: 50%;
-        }
-
-        .metric-bar-cell { min-width: 140px; }
-
-        .mini-bar {
-            height: 6px;
-            background: rgba(255,255,255,0.06);
-            border-radius: 3px;
-            margin-top: 4px;
-        }
-
-        .mini-fill {
-            height: 100%;
-            border-radius: 3px;
-            transition: width 1s ease;
-        }
-
-        .best-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.3rem;
-            background: rgba(16,185,129,0.12);
-            color: var(--real);
-            font-size: 0.7rem;
-            font-weight: 700;
-            padding: 0.15rem 0.55rem;
-            border-radius: 20px;
-            border: 1px solid rgba(16,185,129,0.2);
-            margin-left: 0.4rem;
-        }
-
-        /* Architecture info cards */
-        .arch-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1rem;
-            margin-bottom: 2.5rem;
-        }
-
-        .arch-card {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 14px;
-            padding: 1.3rem;
-            transition: all 0.25s;
-        }
-
-        .arch-card:hover {
-            border-color: var(--primary);
-            box-shadow: 0 0 20px rgba(99,102,241,0.1);
-        }
-
-        .arch-card h4 {
-            font-size: 0.95rem;
-            font-weight: 700;
-            margin-bottom: 0.3rem;
-            display: flex;
-            align-items: center;
-            gap: 0.4rem;
-        }
-
-        .arch-card p {
-            font-size: 0.78rem;
-            color: var(--muted);
-            line-height: 1.5;
-        }
-
-        .arch-type {
-            font-size: 0.7rem;
-            font-weight: 600;
-            padding: 0.15rem 0.5rem;
-            border-radius: 20px;
-            margin-left: auto;
-        }
-
-        .type-dl { background: rgba(99,102,241,0.15); color: #818cf8; }
-        .type-ml { background: rgba(6,182,212,0.15); color: #22d3ee; }
-
-        /* Pipeline section */
-        .pipeline-card {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 18px;
-            padding: 2rem;
-            margin-bottom: 2.5rem;
-        }
-
-        .pipeline-steps {
-            display: flex;
-            align-items: center;
-            gap: 0;
-            flex-wrap: wrap;
-            margin-top: 1.2rem;
-        }
-
-        .pipeline-step {
-            background: var(--surface2);
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            padding: 0.85rem 1rem;
-            font-size: 0.82rem;
-            font-weight: 600;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 0.3rem;
-            min-width: 100px;
-            text-align: center;
-        }
-
-        .pipeline-step .step-icon { font-size: 1.4rem; }
-        .pipeline-step .step-label { color: var(--muted); font-size: 0.7rem; }
-
-        .pipeline-arrow {
-            color: var(--primary);
-            font-size: 1.3rem;
-            padding: 0 0.3rem;
-            opacity: 0.5;
-        }
-
-        /* Dataset info */
-        .dataset-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-            gap: 0.75rem;
-        }
-
-        .dataset-stat {
-            background: var(--surface2);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 1rem;
-            text-align: center;
-        }
-
-        .dataset-stat .ds-val { font-size: 1.6rem; font-weight: 800; }
-        .dataset-stat .ds-label { font-size: 0.75rem; color: var(--muted); margin-top: 0.2rem; }
-
-        .loading-metrics {
-            text-align: center;
-            padding: 3rem;
-            color: var(--muted);
-        }
-
-        /* Responsive */
-        @media (max-width: 768px) {
-            nav { padding: 0.9rem 1rem; }
-            .nav-brand span { display: none; }
-            .status-badge { display: none; }
-            #page-detect.active { padding: 1.5rem 1rem; flex-direction: column; align-items: center; }
-            .result-card { max-width: 100%; }
-            .kpi-strip { grid-template-columns: 1fr 1fr; }
-            .pipeline-steps { justify-content: center; }
-            th, td { padding: 0.75rem 0.75rem; }
+        @media(max-width:768px){
+            nav{padding:.8rem 1rem;}
+            .nav-brand span{display:none;}
+            .mode-pill span:last-child{display:none;}
+            #page-detect.active{padding:1.2rem 1rem;flex-direction:column;align-items:stretch;}
+            .result-card,.upload-card{max-width:100%;}
+            .kpi-strip{grid-template-columns:1fr 1fr;}
+            .pipeline-steps{justify-content:center;}
+            th,td{padding:.7rem .7rem;}
         }
     </style>
 </head>
 <body>
 
-<!-- NAV -->
 <nav>
-    <div class="nav-brand">
-        <span class="icon">🔍</span>
-        <span>Deepfake Detector</span>
-    </div>
-
+    <div class="nav-brand">🔍 <span>Deepfake Detector</span></div>
     <div class="nav-tabs">
         <button class="nav-tab active" onclick="switchTab('detect')" id="tab-detect">🧪 Detect</button>
         <button class="nav-tab" onclick="switchTab('dashboard')" id="tab-dashboard">📊 Dashboard</button>
     </div>
-
-    <div class="status-badge">
-        <span class="status-dot"></span>
-        <span id="status-text">API Live</span>
+    <div class="mode-pill">
+        <span class="dot amber" id="mode-dot"></span>
+        <span id="mode-label">Checking…</span>
     </div>
 </nav>
 
-<!-- ═══════════ DETECT PAGE ═══════════ -->
+<!-- ═══════════════ DETECT PAGE ═══════════════ -->
 <div id="page-detect" class="page active">
 
-    <!-- Upload Card -->
+    <!-- Upload -->
     <div class="upload-card">
         <div class="card-title">Analyze Image</div>
-        <div class="card-subtitle">Upload a face image to detect AI manipulation</div>
+        <div class="card-subtitle">Upload a face image to detect AI manipulation using forensics</div>
 
         <div class="drop-zone" id="drop-zone">
             <div class="drop-icon">📸</div>
             <h3>Drag & Drop Image</h3>
-            <p>or click to browse • JPG, PNG, BMP, WEBP</p>
+            <p>or click to browse • JPG PNG BMP WEBP</p>
         </div>
         <input type="file" id="file-input" accept="image/*">
 
         <div class="preview-wrap" id="preview-wrap">
             <img id="preview-img" src="" alt="Preview">
-            <div class="filename-badge">
-                <span>📎</span>
-                <span id="filename-text"></span>
-            </div>
+            <div class="filename-badge">📎 <span id="filename-text"></span></div>
         </div>
 
-        <!-- Model selection -->
-        <div class="field-label">Select Model</div>
+        <div class="field-label">Select Detection Model</div>
         <div class="model-grid" id="model-grid">
             <div class="model-chip selected" data-model="cbam">CBAM</div>
             <div class="model-chip" data-model="cnn">CNN</div>
@@ -746,403 +318,454 @@
             <div class="model-chip" data-model="lasso">Lasso</div>
         </div>
 
-        <button class="btn-analyze" id="analyze-btn" disabled onclick="runAnalysis()">
-            ⚡ Analyze Image
-        </button>
-        <button class="btn-reset" id="reset-btn" style="display:none" onclick="resetUI()">
-            ↩ Analyze Another Image
-        </button>
+        <button class="btn-analyze" id="analyze-btn" disabled onclick="runAnalysis()">⚡ Analyze Image</button>
+        <button class="btn-reset" id="reset-btn" style="display:none" onclick="resetUI()">↩ Analyze Another</button>
     </div>
 
-    <!-- Loading State -->
+    <!-- Loading -->
     <div class="result-card" id="loading-card">
-        <div class="loading-state" style="display:block;">
+        <div style="text-align:center;padding:2rem 0;">
             <div class="spinner"></div>
-            <div class="loading-text">Analyzing image…</div>
-            <div class="loading-model" id="loading-model-tag">Running CBAM model</div>
+            <div class="loading-text">Running forensics analysis…</div>
+            <div class="loading-model" id="loading-model-tag">Model: CBAM</div>
         </div>
     </div>
 
-    <!-- Result Card -->
+    <!-- Result -->
     <div class="result-card" id="result-card">
         <div class="verdict-icon" id="verdict-icon">⏳</div>
         <div class="result-verdict" id="verdict-text">—</div>
-        <div class="result-model-tag" id="result-model-tag">Model: —</div>
+        <div class="result-meta" id="result-meta">—</div>
 
-        <div class="confidence-block">
-            <div class="conf-header">
-                <span>Confidence Score</span>
-                <span class="conf-value" id="conf-value">0%</span>
-            </div>
-            <div class="progress-track">
-                <div class="progress-bar" id="progress-bar"></div>
-            </div>
+        <div class="conf-header">
+            <span>Confidence Score</span>
+            <span class="conf-value" id="conf-value">0%</span>
+        </div>
+        <div class="progress-track">
+            <div class="progress-bar" id="progress-bar"></div>
         </div>
 
         <div class="stats-grid">
             <div class="stat-box">
-                <div class="stat-label">Probability Fake</div>
+                <div class="stat-label">Fake Probability</div>
                 <div class="stat-value" id="stat-fake">—</div>
             </div>
             <div class="stat-box">
-                <div class="stat-label">Probability Real</div>
+                <div class="stat-label">Real Probability</div>
                 <div class="stat-value" id="stat-real">—</div>
             </div>
             <div class="stat-box">
-                <div class="stat-label">Decision</div>
+                <div class="stat-label">Verdict</div>
                 <div class="stat-value" id="stat-decision">—</div>
             </div>
             <div class="stat-box">
-                <div class="stat-label">Model Used</div>
-                <div class="stat-value" id="stat-model">—</div>
+                <div class="stat-label">Analysis Time</div>
+                <div class="stat-value" id="stat-time">—</div>
             </div>
         </div>
 
-        <div class="mock-badge" id="mock-badge" style="display:none;">
-            ⚠️ Demo Mode — Models not loaded on Vercel
+        <!-- Forensics breakdown -->
+        <div id="sub-scores-section" style="display:none;">
+            <div class="forensics-label">🔬 Forensics Breakdown</div>
+            <div id="sub-scores-list"></div>
         </div>
+
+        <div class="mode-badge forensics" id="mode-badge">🔬 Forensics Mode (Vercel)</div>
     </div>
 
+    <!-- ── Real-time Analytics Strip ── -->
+    <div class="analytics-strip">
+        <div class="analytics-title">
+            📡 Real-Time Session Analytics
+            <span class="live-chip">LIVE</span>
+            <button class="btn-clear" onclick="clearHistory()">Clear</button>
+        </div>
+
+        <div class="analytics-kpis">
+            <div class="a-kpi">
+                <div class="a-kpi-val" id="kpi-total" style="color:var(--primary);">0</div>
+                <div class="a-kpi-label">Images Analyzed</div>
+            </div>
+            <div class="a-kpi">
+                <div class="a-kpi-val" id="kpi-fake" style="color:var(--fake);">0</div>
+                <div class="a-kpi-label">Detected Fake</div>
+            </div>
+            <div class="a-kpi">
+                <div class="a-kpi-val" id="kpi-real" style="color:var(--real);">0</div>
+                <div class="a-kpi-label">Detected Real</div>
+            </div>
+            <div class="a-kpi">
+                <div class="a-kpi-val" id="kpi-avg-conf" style="color:var(--warn);">—</div>
+                <div class="a-kpi-label">Avg. Confidence</div>
+            </div>
+        </div>
+
+        <div class="split-bar-wrap" id="split-bar-wrap" style="display:none;">
+            <div class="split-label">
+                <span style="color:var(--fake);font-weight:700;">FAKE <span id="split-fake-pct">0%</span></span>
+                <span style="color:var(--real);font-weight:700;">REAL <span id="split-real-pct">0%</span></span>
+            </div>
+            <div class="split-track">
+                <div class="split-fake" id="split-fake-bar" style="width:0%"></div>
+                <div class="split-real" id="split-real-bar" style="width:0%"></div>
+            </div>
+        </div>
+
+        <div class="history-title">Recent Analyses</div>
+        <div class="history-list" id="history-list">
+            <div class="no-history">No images analyzed yet. Upload an image to begin.</div>
+        </div>
+    </div>
 </div>
 
-<!-- ═══════════ DASHBOARD PAGE ═══════════ -->
+<!-- ═══════════════ DASHBOARD PAGE ═══════════════ -->
 <div id="page-dashboard" class="page">
-
     <div class="dash-header">
         <h1>Model Dashboard</h1>
-        <p>Benchmark comparison of all models trained on 2,041 deepfake images</p>
+        <p>Benchmark results on 2,041 deepfake images — all five models compared</p>
     </div>
 
-    <!-- KPIs -->
     <div class="kpi-strip">
-        <div class="kpi-card">
-            <div class="kpi-icon">🤖</div>
-            <div class="kpi-label">Models Available</div>
-            <div class="kpi-value">5</div>
-            <div class="kpi-sub">CBAM, CNN, SVM, Ridge, Lasso</div>
-        </div>
-        <div class="kpi-card">
-            <div class="kpi-icon">🖼️</div>
-            <div class="kpi-label">Training Dataset</div>
-            <div class="kpi-value">2,041</div>
-            <div class="kpi-sub">Real + Fake images</div>
-        </div>
-        <div class="kpi-card">
-            <div class="kpi-icon">🏆</div>
-            <div class="kpi-label">Best Accuracy</div>
-            <div class="kpi-value" id="kpi-best-acc">—</div>
-            <div class="kpi-sub" id="kpi-best-model">Loading…</div>
-        </div>
-        <div class="kpi-card">
-            <div class="kpi-icon">🎯</div>
-            <div class="kpi-label">Best ROC-AUC</div>
-            <div class="kpi-value" id="kpi-best-roc">—</div>
-            <div class="kpi-sub" id="kpi-best-roc-model">Loading…</div>
-        </div>
+        <div class="kpi-card"><div class="kpi-icon">🤖</div><div class="kpi-label">Models</div><div class="kpi-value">5</div><div class="kpi-sub">CBAM · CNN · SVM · Ridge · Lasso</div></div>
+        <div class="kpi-card"><div class="kpi-icon">🖼️</div><div class="kpi-label">Dataset Size</div><div class="kpi-value">2,041</div><div class="kpi-sub">1,021 Real · 1,020 Fake</div></div>
+        <div class="kpi-card"><div class="kpi-icon">🏆</div><div class="kpi-label">Best Accuracy</div><div class="kpi-value" id="kpi-best-acc">—</div><div class="kpi-sub" id="kpi-best-acc-model">Loading…</div></div>
+        <div class="kpi-card"><div class="kpi-icon">🎯</div><div class="kpi-label">Best ROC-AUC</div><div class="kpi-value" id="kpi-best-roc">—</div><div class="kpi-sub" id="kpi-best-roc-model">Loading…</div></div>
     </div>
 
-    <!-- Performance table -->
-    <div class="section-title">📈 Model Performance Metrics</div>
+    <div class="section-title">📈 Performance Comparison</div>
     <div class="table-card">
-        <div class="loading-metrics" id="metrics-loading">
-            <div class="spinner" style="width:32px;height:32px;margin-bottom:0.5rem;"></div>
-            Loading metrics…
-        </div>
+        <div class="loading-metrics" id="metrics-loading"><div class="spinner" style="width:30px;height:30px;margin-bottom:.5rem;"></div>Loading…</div>
         <table id="metrics-table" style="display:none;">
-            <thead>
-                <tr>
-                    <th>Model</th>
-                    <th>Accuracy</th>
-                    <th>Precision</th>
-                    <th>Recall</th>
-                    <th>F1-Score</th>
-                    <th>ROC-AUC</th>
-                </tr>
-            </thead>
+            <thead><tr><th>Model</th><th>Accuracy</th><th>Precision</th><th>Recall</th><th>F1-Score</th><th>ROC-AUC</th></tr></thead>
             <tbody id="metrics-body"></tbody>
         </table>
     </div>
 
-    <!-- Architecture cards -->
-    <div class="section-title">🏗️ Model Architectures</div>
+    <div class="section-title">🏗️ Architectures</div>
     <div class="arch-grid">
-        <div class="arch-card">
-            <h4>🧠 CBAM <span class="arch-type type-dl">Deep Learning</span></h4>
-            <p>CNN + Convolutional Block Attention Module. Channel & spatial attention gates after every conv block. Best for subtle forgery artefacts.</p>
-        </div>
-        <div class="arch-card">
-            <h4>🖥️ CNN <span class="arch-type type-dl">Deep Learning</span></h4>
-            <p>4-block baseline CNN. Conv-BN-ReLU-MaxPool layers followed by Global Average Pooling and a dense classifier. Input: 128×128×3.</p>
-        </div>
-        <div class="arch-card">
-            <h4>📐 SVM <span class="arch-type type-ml">Classical ML</span></h4>
-            <p>Support Vector Machine with RBF kernel and Platt scaling for probability estimates. Features: HOG + PCA(128).</p>
-        </div>
-        <div class="arch-card">
-            <h4>〰️ Ridge <span class="arch-type type-ml">Classical ML</span></h4>
-            <p>L2-regularized linear classifier. Fast and stable, trained on HOG histogram features compressed via PCA to 128 dimensions.</p>
-        </div>
-        <div class="arch-card">
-            <h4>🔻 Lasso <span class="arch-type type-ml">Classical ML</span></h4>
-            <p>L1 logistic regression promoting sparse feature selection. Same HOG + PCA(128) pipeline as Ridge and SVM.</p>
-        </div>
+        <div class="arch-card"><h4>🧠 CBAM <span class="arch-type type-dl">Deep Learning</span></h4><p>CNN + Convolutional Block Attention Module. Channel & spatial attention after every conv block. Best at detecting subtle GAN artefacts.</p></div>
+        <div class="arch-card"><h4>🖥️ CNN <span class="arch-type type-dl">Deep Learning</span></h4><p>4-block baseline CNN. Conv-BN-ReLU-MaxPool + Global Average Pooling + dense head. Input: 128×128×3.</p></div>
+        <div class="arch-card"><h4>📐 SVM <span class="arch-type type-ml">Classical ML</span></h4><p>RBF kernel SVM with Platt probability calibration. Features: HOG histogram + PCA(128).</p></div>
+        <div class="arch-card"><h4>〰️ Ridge <span class="arch-type type-ml">Classical ML</span></h4><p>L2-regularized linear classifier. Fast and stable. Same HOG + PCA(128) feature pipeline.</p></div>
+        <div class="arch-card"><h4>🔻 Lasso <span class="arch-type type-ml">Classical ML</span></h4><p>L1 logistic regression. Sparse feature selection. Trained on HOG + PCA(128) features.</p></div>
     </div>
 
-    <!-- Pipeline -->
     <div class="section-title">⚙️ Detection Pipeline</div>
     <div class="pipeline-card">
-        <p style="font-size:0.85rem;color:var(--muted);">End-to-end flow from raw image to prediction output</p>
+        <p style="font-size:.83rem;color:var(--muted);">End-to-end flow from raw image to REAL / FAKE verdict</p>
         <div class="pipeline-steps">
-            <div class="pipeline-step">
-                <span class="step-icon">🖼️</span>
-                <span>Image Input</span>
-                <span class="step-label">Any format</span>
-            </div>
+            <div class="pipeline-step"><span class="step-icon">🖼️</span><span>Input</span><span class="step-label">Any format</span></div>
             <span class="pipeline-arrow">→</span>
-            <div class="pipeline-step">
-                <span class="step-icon">✂️</span>
-                <span>Resize</span>
-                <span class="step-label">128×128</span>
-            </div>
+            <div class="pipeline-step"><span class="step-icon">✂️</span><span>Resize</span><span class="step-label">128×128</span></div>
             <span class="pipeline-arrow">→</span>
-            <div class="pipeline-step">
-                <span class="step-icon">🔢</span>
-                <span>Normalize</span>
-                <span class="step-label">0–1 range</span>
-            </div>
+            <div class="pipeline-step"><span class="step-icon">🔢</span><span>Normalize</span><span class="step-label">0–1</span></div>
             <span class="pipeline-arrow">→</span>
-            <div class="pipeline-step">
-                <span class="step-icon">⚡</span>
-                <span>Feature</span>
-                <span class="step-label">HOG / CNN</span>
-            </div>
+            <div class="pipeline-step"><span class="step-icon">🔬</span><span>Features</span><span class="step-label">HOG / ELA / FFT</span></div>
             <span class="pipeline-arrow">→</span>
-            <div class="pipeline-step">
-                <span class="step-icon">🤖</span>
-                <span>Model</span>
-                <span class="step-label">CBAM/SVM/…</span>
-            </div>
+            <div class="pipeline-step"><span class="step-icon">🤖</span><span>Model</span><span class="step-label">CBAM / SVM…</span></div>
             <span class="pipeline-arrow">→</span>
-            <div class="pipeline-step">
-                <span class="step-icon">🎯</span>
-                <span>Result</span>
-                <span class="step-label">REAL / FAKE</span>
-            </div>
+            <div class="pipeline-step"><span class="step-icon">🎯</span><span>Verdict</span><span class="step-label">REAL / FAKE</span></div>
         </div>
     </div>
 
-    <!-- Dataset info -->
     <div class="section-title">📦 Dataset Overview</div>
     <div class="dataset-grid">
-        <div class="dataset-stat">
-            <div class="ds-val" style="color:var(--real);">1,021</div>
-            <div class="ds-label">Real Images</div>
-        </div>
-        <div class="dataset-stat">
-            <div class="ds-val" style="color:var(--fake);">1,020</div>
-            <div class="ds-label">Fake Images</div>
-        </div>
-        <div class="dataset-stat">
-            <div class="ds-val">128px</div>
-            <div class="ds-label">Input Resolution</div>
-        </div>
-        <div class="dataset-stat">
-            <div class="ds-val">32</div>
-            <div class="ds-label">Batch Size</div>
-        </div>
-        <div class="dataset-stat">
-            <div class="ds-val">30</div>
-            <div class="ds-label">Max Epochs</div>
-        </div>
-        <div class="dataset-stat">
-            <div class="ds-val">128</div>
-            <div class="ds-label">PCA Components</div>
-        </div>
+        <div class="dataset-stat"><div class="ds-val" style="color:var(--real);">1,021</div><div class="ds-label">Real Images</div></div>
+        <div class="dataset-stat"><div class="ds-val" style="color:var(--fake);">1,020</div><div class="ds-label">Fake Images</div></div>
+        <div class="dataset-stat"><div class="ds-val">128px</div><div class="ds-label">Input Size</div></div>
+        <div class="dataset-stat"><div class="ds-val">32</div><div class="ds-label">Batch Size</div></div>
+        <div class="dataset-stat"><div class="ds-val">30</div><div class="ds-label">Max Epochs</div></div>
+        <div class="dataset-stat"><div class="ds-val">1e-4</div><div class="ds-label">Learning Rate</div></div>
     </div>
-
 </div>
 
-<!-- ═══════════ SCRIPT ═══════════ -->
 <script>
-    // ── Tab switching ──
-    function switchTab(tab) {
-        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-        document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-        document.getElementById('page-' + tab).classList.add('active');
-        document.getElementById('tab-' + tab).classList.add('active');
-        if (tab === 'dashboard') loadMetrics();
-    }
+// ── Tab switcher ──
+function switchTab(tab){
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+    document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+    document.getElementById('page-'+tab).classList.add('active');
+    document.getElementById('tab-'+tab).classList.add('active');
+    if(tab==='dashboard') loadMetrics();
+}
 
-    // ── Model chip selection ──
-    let selectedModel = 'cbam';
-    document.querySelectorAll('.model-chip').forEach(chip => {
-        chip.addEventListener('click', () => {
-            document.querySelectorAll('.model-chip').forEach(c => c.classList.remove('selected'));
-            chip.classList.add('selected');
-            selectedModel = chip.dataset.model;
-        });
+// ── Check API health on load ──
+async function checkHealth(){
+    try{
+        const r=await fetch('/health');
+        const d=await r.json();
+        const dot=document.getElementById('mode-dot');
+        const lbl=document.getElementById('mode-label');
+        if(d.mode==='full'){dot.className='dot green';lbl.textContent='Full ML Mode';}
+        else if(d.mode==='lite'){dot.className='dot amber';lbl.textContent='Forensics Mode';}
+        else{dot.style.background='var(--fake)';lbl.textContent='Degraded';}
+    }catch(e){
+        document.getElementById('mode-label').textContent='Offline';
+    }
+}
+checkHealth();
+
+// ── Model chip selection ──
+let selectedModel='cbam';
+document.querySelectorAll('.model-chip').forEach(chip=>{
+    chip.addEventListener('click',()=>{
+        document.querySelectorAll('.model-chip').forEach(c=>c.classList.remove('selected'));
+        chip.classList.add('selected');
+        selectedModel=chip.dataset.model;
     });
+});
 
-    // ── File handling ──
-    const dropZone  = document.getElementById('drop-zone');
-    const fileInput = document.getElementById('file-input');
-    const analyzeBtn = document.getElementById('analyze-btn');
-    let currentFile = null;
+// ── File drag & drop ──
+const dropZone=document.getElementById('drop-zone');
+const fileInput=document.getElementById('file-input');
+const analyzeBtn=document.getElementById('analyze-btn');
+let currentFile=null;
 
-    dropZone.addEventListener('click', () => fileInput.click());
-    ['dragenter','dragover','dragleave','drop'].forEach(e => dropZone.addEventListener(e, ev => { ev.preventDefault(); ev.stopPropagation(); }));
-    ['dragenter','dragover'].forEach(e => dropZone.addEventListener(e, () => dropZone.classList.add('dragover')));
-    ['dragleave','drop'].forEach(e => dropZone.addEventListener(e, () => dropZone.classList.remove('dragover')));
-    dropZone.addEventListener('drop', e => handleFiles(e.dataTransfer.files));
-    fileInput.addEventListener('change', function() { handleFiles(this.files); });
+dropZone.addEventListener('click',()=>fileInput.click());
+['dragenter','dragover','dragleave','drop'].forEach(ev=>dropZone.addEventListener(ev,e=>{e.preventDefault();e.stopPropagation();}));
+['dragenter','dragover'].forEach(ev=>dropZone.addEventListener(ev,()=>dropZone.classList.add('dragover')));
+['dragleave','drop'].forEach(ev=>dropZone.addEventListener(ev,()=>dropZone.classList.remove('dragover')));
+dropZone.addEventListener('drop',e=>handleFiles(e.dataTransfer.files));
+fileInput.addEventListener('change',function(){handleFiles(this.files);});
 
-    function handleFiles(files) {
-        if (!files.length || !files[0].type.startsWith('image/')) return;
-        currentFile = files[0];
-        const reader = new FileReader();
-        reader.onload = e => {
-            document.getElementById('preview-img').src = e.target.result;
-            document.getElementById('filename-text').textContent = currentFile.name;
-            dropZone.style.display = 'none';
-            document.getElementById('preview-wrap').style.display = 'block';
-            analyzeBtn.disabled = false;
-        };
-        reader.readAsDataURL(currentFile);
-    }
-
-    // ── Analysis ──
-    async function runAnalysis() {
-        if (!currentFile) return;
-
-        // Show loading card
-        document.getElementById('loading-card').classList.add('show');
-        document.getElementById('result-card').classList.remove('show');
-        document.getElementById('loading-model-tag').textContent = 'Running ' + selectedModel.toUpperCase() + ' model…';
-        analyzeBtn.style.display = 'none';
-        document.getElementById('reset-btn').style.display = 'none';
-
-        const formData = new FormData();
-        formData.append('image', currentFile);
-        formData.append('model', selectedModel);
-
-        try {
-            const res = await fetch('/predict', { method: 'POST', body: formData });
-            const data = await res.json();
-            if (!res.ok) throw new Error(data.error || 'Server error');
-            showResult(data);
-        } catch (err) {
-            document.getElementById('loading-card').classList.remove('show');
-            analyzeBtn.style.display = 'block';
-            alert('Error: ' + err.message);
-        }
-    }
-
-    function showResult(data) {
-        document.getElementById('loading-card').classList.remove('show');
-
-        const isFake  = data.label === 'FAKE';
-        const confPct = (data.confidence * 100).toFixed(1);
-        const fakePct = isFake ? confPct : (100 - parseFloat(confPct)).toFixed(1);
-        const realPct = isFake ? (100 - parseFloat(confPct)).toFixed(1) : confPct;
-
-        document.getElementById('verdict-icon').textContent  = isFake ? '🚨' : '✅';
-        document.getElementById('verdict-text').textContent  = data.label;
-        document.getElementById('verdict-text').className    = 'result-verdict ' + data.label.toLowerCase();
-        document.getElementById('result-model-tag').textContent = 'Analyzed with: ' + (data.model || selectedModel.toUpperCase());
-        document.getElementById('conf-value').textContent    = confPct + '%';
-        document.getElementById('stat-fake').textContent     = fakePct + '%';
-        document.getElementById('stat-real').textContent     = realPct + '%';
-        document.getElementById('stat-decision').textContent = data.label;
-        document.getElementById('stat-decision').style.color = isFake ? 'var(--fake)' : 'var(--real)';
-        document.getElementById('stat-model').textContent    = data.model || selectedModel.toUpperCase();
-        document.getElementById('mock-badge').style.display  = data.mocked ? 'flex' : 'none';
-
-        const bar = document.getElementById('progress-bar');
-        bar.style.background = isFake ? 'var(--fake)' : 'var(--real)';
-        bar.style.boxShadow  = isFake ? '0 0 10px var(--fake-glow)' : '0 0 10px var(--real-glow)';
-        setTimeout(() => { bar.style.width = confPct + '%'; }, 50);
-
-        document.getElementById('result-card').classList.add('show');
-        document.getElementById('reset-btn').style.display = 'block';
-    }
-
-    function resetUI() {
-        currentFile = null;
-        fileInput.value = '';
-        document.getElementById('drop-zone').style.display = 'block';
-        document.getElementById('preview-wrap').style.display = 'none';
-        document.getElementById('result-card').classList.remove('show');
-        document.getElementById('loading-card').classList.remove('show');
-        analyzeBtn.disabled = true;
-        analyzeBtn.style.display = 'block';
-        document.getElementById('reset-btn').style.display = 'none';
-        document.getElementById('progress-bar').style.width = '0%';
-    }
-
-    // ── Dashboard metrics ──
-    const MODEL_COLORS = {
-        SVM:   '#6366f1', Ridge: '#06b6d4', Lasso: '#f59e0b',
-        CNN:   '#ec4899', CBAM:  '#10b981'
+function handleFiles(files){
+    if(!files.length||!files[0].type.startsWith('image/'))return;
+    currentFile=files[0];
+    const reader=new FileReader();
+    reader.onload=e=>{
+        document.getElementById('preview-img').src=e.target.result;
+        document.getElementById('filename-text').textContent=currentFile.name;
+        dropZone.style.display='none';
+        document.getElementById('preview-wrap').style.display='block';
+        analyzeBtn.disabled=false;
     };
+    reader.readAsDataURL(currentFile);
+}
 
-    let metricsLoaded = false;
+// ── Analysis ──
+async function runAnalysis(){
+    if(!currentFile)return;
+    document.getElementById('loading-card').classList.add('show');
+    document.getElementById('result-card').classList.remove('show');
+    document.getElementById('loading-model-tag').textContent='Running '+selectedModel.toUpperCase()+' analysis…';
+    analyzeBtn.style.display='none';
+    document.getElementById('reset-btn').style.display='none';
 
-    async function loadMetrics() {
-        if (metricsLoaded) return;
-        try {
-            const res  = await fetch('/metrics');
-            const data = await res.json();
-            if (data.success) renderMetrics(data.metrics, data.mocked);
-        } catch(e) {
-            document.getElementById('metrics-loading').textContent = 'Failed to load metrics.';
-        }
+    const fd=new FormData();
+    fd.append('image',currentFile);
+    fd.append('model',selectedModel);
+
+    try{
+        const res=await fetch('/predict',{method:'POST',body:fd});
+        const data=await res.json();
+        if(!res.ok)throw new Error(data.error||'Server error');
+        showResult(data);
+        recordHistory(data,currentFile.name);
+        updateAnalytics();
+    }catch(err){
+        document.getElementById('loading-card').classList.remove('show');
+        analyzeBtn.style.display='block';
+        alert('Error: '+err.message);
+    }
+}
+
+const SUB_LABELS={ela:'ELA',channel:'Channels',noise:'Noise/Texture',freq:'Frequency',skin:'Skin Uniform.'};
+const SUB_COLORS={ela:'#6366f1',channel:'#06b6d4',noise:'#f59e0b',freq:'#ec4899',skin:'#10b981'};
+
+function showResult(data){
+    document.getElementById('loading-card').classList.remove('show');
+    const isFake=data.label==='FAKE';
+    const fakePct=(data.fake_prob*100).toFixed(1);
+    const realPct=(data.real_prob*100).toFixed(1);
+    const confPct=(data.confidence*100).toFixed(1);
+
+    document.getElementById('verdict-icon').textContent=isFake?'🚨':'✅';
+    document.getElementById('verdict-text').textContent=data.label;
+    document.getElementById('verdict-text').className='result-verdict '+(isFake?'fake':'real');
+    document.getElementById('result-meta').textContent=
+        'Model: '+(data.model||selectedModel.toUpperCase())+
+        ' · '+data.elapsed_s+'s · '+(data.mode==='full_model'?'Full ML':'Image Forensics');
+
+    document.getElementById('conf-value').textContent=confPct+'%';
+    document.getElementById('stat-fake').textContent=fakePct+'%';
+    document.getElementById('stat-fake').style.color=isFake?'var(--fake)':'var(--text)';
+    document.getElementById('stat-real').textContent=realPct+'%';
+    document.getElementById('stat-real').style.color=isFake?'var(--text)':'var(--real)';
+    document.getElementById('stat-decision').textContent=data.label;
+    document.getElementById('stat-decision').style.color=isFake?'var(--fake)':'var(--real)';
+    document.getElementById('stat-time').textContent=data.elapsed_s+'s';
+
+    const bar=document.getElementById('progress-bar');
+    bar.style.background=isFake?'var(--fake)':'var(--real)';
+    bar.style.boxShadow=isFake?'0 0 12px var(--fake-glow)':'0 0 12px var(--real-glow)';
+    setTimeout(()=>{bar.style.width=confPct+'%';},50);
+
+    // Sub-scores breakdown
+    const subSec=document.getElementById('sub-scores-section');
+    const subList=document.getElementById('sub-scores-list');
+    if(data.sub_scores&&Object.keys(data.sub_scores).length>0){
+        subList.innerHTML='';
+        Object.entries(data.sub_scores).forEach(([k,v])=>{
+            const pct=Math.round(v*100);
+            const color=SUB_COLORS[k]||'#6366f1';
+            const label=SUB_LABELS[k]||k;
+            subList.innerHTML+=`
+            <div class="sub-score-row">
+                <span class="sub-name">${label}</span>
+                <div class="sub-track"><div class="sub-fill" style="width:${pct}%;background:${color};box-shadow:0 0 6px ${color}66;"></div></div>
+                <span class="sub-val" style="color:${color};">${pct}%</span>
+            </div>`;
+        });
+        subSec.style.display='block';
+    }else{
+        subSec.style.display='none';
     }
 
-    function renderMetrics(metrics, mocked) {
-        metricsLoaded = true;
+    const mb=document.getElementById('mode-badge');
+    if(data.mode==='full_model'){mb.className='mode-badge full';mb.textContent='✅ Full ML Models';}
+    else{mb.className='mode-badge forensics';mb.textContent='🔬 Forensics Mode';}
 
-        // Find bests
-        let bestAcc = 0, bestAccModel = '', bestRoc = 0, bestRocModel = '';
-        Object.entries(metrics).forEach(([name, m]) => {
-            if (m.accuracy > bestAcc) { bestAcc = m.accuracy; bestAccModel = name; }
-            if (m.roc_auc  > bestRoc) { bestRoc = m.roc_auc;  bestRocModel  = name; }
-        });
+    document.getElementById('result-card').classList.add('show');
+    document.getElementById('reset-btn').style.display='block';
+}
 
-        document.getElementById('kpi-best-acc').textContent       = (bestAcc * 100).toFixed(1) + '%';
-        document.getElementById('kpi-best-model').textContent      = bestAccModel + (mocked ? ' (demo)' : '');
-        document.getElementById('kpi-best-roc').textContent       = bestRoc.toFixed(4);
-        document.getElementById('kpi-best-roc-model').textContent = bestRocModel + (mocked ? ' (demo)' : '');
+function resetUI(){
+    currentFile=null;fileInput.value='';
+    dropZone.style.display='block';
+    document.getElementById('preview-wrap').style.display='none';
+    document.getElementById('result-card').classList.remove('show');
+    document.getElementById('loading-card').classList.remove('show');
+    analyzeBtn.disabled=true;analyzeBtn.style.display='block';
+    document.getElementById('reset-btn').style.display='none';
+    document.getElementById('progress-bar').style.width='0%';
+    document.getElementById('sub-scores-section').style.display='none';
+}
 
-        // Table
-        const tbody = document.getElementById('metrics-body');
-        tbody.innerHTML = '';
-        Object.entries(metrics).forEach(([name, m]) => {
-            const color = MODEL_COLORS[name] || '#94a3b8';
-            const isTopAcc = name === bestAccModel;
-            const pct = v => (v * 100).toFixed(2) + '%';
-            tbody.innerHTML += `
-            <tr>
-                <td>
-                    <div class="model-name">
-                        <span class="model-badge" style="background:${color};box-shadow:0 0 6px ${color}55;"></span>
-                        ${name}
-                        ${isTopAcc ? '<span class="best-badge">🏆 Best</span>' : ''}
-                    </div>
-                </td>
-                <td class="metric-bar-cell">
-                    ${pct(m.accuracy)}
-                    <div class="mini-bar"><div class="mini-fill" style="width:${m.accuracy*100}%;background:${color};"></div></div>
-                </td>
-                <td>${pct(m.precision)}</td>
-                <td>${pct(m.recall)}</td>
-                <td>${pct(m.f1)}</td>
-                <td>${m.roc_auc.toFixed(4)}</td>
-            </tr>`;
-        });
+// ── Real-time analytics (localStorage) ──
+function getHistory(){try{return JSON.parse(localStorage.getItem('dfHistory')||'[]');}catch(e){return[];}}
+function saveHistory(h){localStorage.setItem('dfHistory',JSON.stringify(h));}
 
-        document.getElementById('metrics-loading').style.display = 'none';
-        document.getElementById('metrics-table').style.display   = 'table';
+function recordHistory(data,filename){
+    const h=getHistory();
+    h.unshift({
+        label:data.label,
+        conf:data.confidence,
+        model:data.model||selectedModel.toUpperCase(),
+        name:filename,
+        ts:Date.now()
+    });
+    if(h.length>50)h.pop();
+    saveHistory(h);
+}
+
+function updateAnalytics(){
+    const h=getHistory();
+    const total=h.length;
+    const fakes=h.filter(x=>x.label==='FAKE').length;
+    const reals=total-fakes;
+    const avgConf=total>0?h.reduce((a,x)=>a+x.conf,0)/total:0;
+
+    document.getElementById('kpi-total').textContent=total;
+    document.getElementById('kpi-fake').textContent=fakes;
+    document.getElementById('kpi-real').textContent=reals;
+    document.getElementById('kpi-avg-conf').textContent=total>0?(avgConf*100).toFixed(1)+'%':'—';
+
+    const sw=document.getElementById('split-bar-wrap');
+    if(total>0){
+        sw.style.display='block';
+        const fp=Math.round(fakes/total*100);
+        const rp=100-fp;
+        document.getElementById('split-fake-bar').style.width=fp+'%';
+        document.getElementById('split-real-bar').style.width=rp+'%';
+        document.getElementById('split-fake-pct').textContent=fp+'%';
+        document.getElementById('split-real-pct').textContent=rp+'%';
+    }else{sw.style.display='none';}
+
+    renderHistoryList(h);
+}
+
+function renderHistoryList(h){
+    const el=document.getElementById('history-list');
+    if(h.length===0){
+        el.innerHTML='<div class="no-history">No images analyzed yet. Upload an image to begin.</div>';
+        return;
     }
+    el.innerHTML=h.slice(0,12).map(item=>{
+        const isFake=item.label==='FAKE';
+        const when=timeSince(item.ts);
+        return`<div class="history-item">
+            <span class="history-verdict ${isFake?'fake':'real'}">${item.label}</span>
+            <span class="history-name">${item.name}</span>
+            <span class="history-conf" style="color:${isFake?'var(--fake)':'var(--real)'}">${(item.conf*100).toFixed(1)}%</span>
+            <span class="history-model">${item.model}</span>
+            <span class="history-time">${when}</span>
+        </div>`;
+    }).join('');
+}
+
+function timeSince(ts){
+    const s=Math.floor((Date.now()-ts)/1000);
+    if(s<60)return s+'s ago';
+    if(s<3600)return Math.floor(s/60)+'m ago';
+    return Math.floor(s/3600)+'h ago';
+}
+
+function clearHistory(){
+    localStorage.removeItem('dfHistory');
+    updateAnalytics();
+}
+
+// Load analytics on page load
+updateAnalytics();
+
+// ── Dashboard metrics ──
+const MODEL_COLORS={SVM:'#6366f1',Ridge:'#06b6d4',Lasso:'#f59e0b',CNN:'#ec4899',CBAM:'#10b981'};
+let metricsLoaded=false;
+
+async function loadMetrics(){
+    if(metricsLoaded)return;
+    try{
+        const res=await fetch('/metrics');
+        const data=await res.json();
+        if(data.success)renderMetrics(data.metrics);
+    }catch(e){
+        document.getElementById('metrics-loading').textContent='Failed to load metrics.';
+    }
+}
+
+function renderMetrics(metrics){
+    metricsLoaded=true;
+    let bestAcc=0,bestAccM='',bestRoc=0,bestRocM='';
+    Object.entries(metrics).forEach(([n,m])=>{
+        if(m.accuracy>bestAcc){bestAcc=m.accuracy;bestAccM=n;}
+        if(m.roc_auc>bestRoc){bestRoc=m.roc_auc;bestRocM=n;}
+    });
+    document.getElementById('kpi-best-acc').textContent=(bestAcc*100).toFixed(1)+'%';
+    document.getElementById('kpi-best-acc-model').textContent=bestAccM;
+    document.getElementById('kpi-best-roc').textContent=bestRoc.toFixed(4);
+    document.getElementById('kpi-best-roc-model').textContent=bestRocM;
+
+    const tbody=document.getElementById('metrics-body');
+    tbody.innerHTML='';
+    Object.entries(metrics).forEach(([n,m])=>{
+        const c=MODEL_COLORS[n]||'#94a3b8';
+        const isTop=n===bestAccM;
+        const pct=v=>(v*100).toFixed(2)+'%';
+        tbody.innerHTML+=`<tr>
+            <td><div class="model-name-cell">
+                <span class="model-dot" style="background:${c};box-shadow:0 0 6px ${c}88;"></span>
+                ${n}${isTop?'<span class="best-badge">🏆 Best</span>':''}
+            </div></td>
+            <td class="metric-cell">${pct(m.accuracy)}<div class="mini-bar"><div class="mini-fill" style="width:${m.accuracy*100}%;background:${c};"></div></div></td>
+            <td>${pct(m.precision)}</td>
+            <td>${pct(m.recall)}</td>
+            <td>${pct(m.f1)}</td>
+            <td>${m.roc_auc.toFixed(4)}</td>
+        </tr>`;
+    });
+    document.getElementById('metrics-loading').style.display='none';
+    document.getElementById('metrics-table').style.display='table';
+}
 </script>
 </body>
 </html>
